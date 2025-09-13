@@ -10,13 +10,17 @@ const nonNullAssertion = (message: string) => {
 };
 
 const siteUrl = process.env.SITE_URL ?? nonNullAssertion("SITE_URL not set");
+const NODE_ENV = process.env.NODE_ENV ?? ("development" as const);
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
-export const authComponent = createClient<DataModel>(components.betterAuth);
+export const authComponent = createClient<DataModel>(components.betterAuth, {
+  verbose: NODE_ENV === "development",
+});
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
+    baseURL: siteUrl,
     trustedOrigins: [siteUrl],
     database: authComponent.adapter(ctx),
     // Configure simple, non-verified email/password to get started

@@ -10,6 +10,7 @@ const convex = new ConvexReactClient(
   process.env.NEXT_PUBLIC_CONVEX_URL ??
     nonNullAssertion("NEXT_PUBLIC_CONVEX_URL needs to be set"),
   {
+    verbose: true,
     expectAuth: true,
   },
 );
