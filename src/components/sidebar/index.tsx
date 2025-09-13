@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-export function AppSidebar() {
+export default function SidebarComponent() {
   return (
     <Sidebar>
       <SidebarHeader>
