@@ -6,9 +6,17 @@ import Calendar from "@/components/calendar";
 import Sidebar from "@/components/sidebar";
 import { Input } from "@/components/ui/input";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/authClient";
 
 export default function Dashboard() {
+  const { isPending } = authClient.useSession();
+
   const [today, setToday] = useState(new Date());
+
+  if (isPending) {
+    return <div>Loading FROM THE TOP...</div>;
+  }
+
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
   return (

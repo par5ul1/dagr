@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { NavUser } from "@/components/NavUser";
 
 export default function SidebarComponent() {
   return (
@@ -61,9 +62,7 @@ export default function SidebarComponent() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="px-4 py-2 text-sm text-muted-foreground">
-          Dagr v0.1.0
-        </div>
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );
