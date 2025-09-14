@@ -2,7 +2,7 @@
 import { Agent } from "@convex-dev/agent";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { v } from "convex/values";
-import * as z from "zod";
+import { z } from "zod";
 import { api, components } from "./_generated/api";
 import { action } from "./_generated/server";
 import { nonNullAssertion } from "./auth";
@@ -10,7 +10,7 @@ import type { CalendarEvent } from "./calendar";
 
 const OPENROUTER_API_KEY =
   process.env.OPENROUTER_API_KEY ??
-  nonNullAssertion("GOOGLE_GENERATIVE_AI_API_KEY not set");
+  nonNullAssertion("OPENROUTER_API_KEY not set");
 
 const openrouterProvider = createOpenRouter({
   apiKey: OPENROUTER_API_KEY,
@@ -68,11 +68,27 @@ export const talkWithAgent = action({
       }
     );
 
+    const schema = z.object({
+      items: z.array(
+        z.object({
+          startDay: z.string().describe("YYYY-MM-DD"),
+          startTime: z.string().describe("HH:MM (24-hour)"),
+          endDay: z.string().describe("YYYY-MM-DD"),
+          endTime: z.string().describe("HH:MM (24-hour)"),
+          title: z.string().describe("Title of the event"),
+          description: z.string().describe("Detailed description of the event"),
+          summary: z.string().describe("Short summary of the event"),
+        })
+      ),
+    });
+
+    /* @ts-expect-error - this will be heavy; nothing we can do */
     const result = await structureOutputMakerAgent.generateObject(
       ctx,
       { threadId: thread.threadId },
+      /* @ts-expect-error - the type should work */
       {
-        prompt: [
+        messages: [
           {
             role: "user",
             content: [
@@ -83,26 +99,12 @@ export const talkWithAgent = action({
             ],
           },
         ],
-        schema: z.object({
-          items: z.array(
-            z.object({
-              startDay: z.string().describe("YYYY-MM-DD"),
-              startTime: z.string().describe("HH:MM (24-hour)"),
-              endDay: z.string().describe("YYYY-MM-DD"),
-              endTime: z.string().describe("HH:MM (24-hour)"),
-              title: z.string().describe("Title of the event"),
-              description: z
-                .string()
-                .describe("Detailed description of the event"),
-              summary: z.string().describe("Short summary of the event"),
-            })
-          ),
-        }),
+        schema,
       }
     );
 
     const events = result.object.items.map(
-      (item): CalendarEvent & { title: string } =>
+      (item: any): CalendarEvent & { title: string } =>
         ({
           title: item.title,
           summary: item.title,
@@ -133,7 +135,7 @@ export const talkWithAgent = action({
     });
 
     await Promise.all(
-      events.slice(1).map((event) =>
+      events.slice(1).map((event: any) =>
         ctx.runAction(api.calendar.insertCalendarEvent, {
           userId: args.userId,
           event: {

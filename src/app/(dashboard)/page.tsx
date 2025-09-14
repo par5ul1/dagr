@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   addDays,
   differenceInDays,
@@ -9,16 +10,25 @@ import {
 } from "date-fns";
 import { SparkleIcon, SparklesIcon } from "lucide-react";
 import { redirect } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api } from "@/../convex/_generated/api";
 import type { Doc } from "@/../convex/_generated/dataModel";
+import type { CalendarEvent } from "@/../convex/calendar";
 import Calendar from "@/components/app/calendar";
 import Sidebar from "@/components/app/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Interstitial from "@/components/ui/interstitial";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { useGetUserConfig } from "@/hooks/useUserConfig";
+import { useTalkWithAgent } from "@/hooks/useAgents";
+import { useGetAllEventsForUser } from "@/hooks/useCalendar";
+import {
+  useGetUserConfig,
+  useSyncGoogleCalendarWithUserConfig,
+} from "@/hooks/useUserConfig";
 import { authClient } from "@/lib/authClient";
+import generatePlannerPrompt from "@/utils/generatePlannerPrompt";
+import { convex } from "../providers/ConvexClientProvider";
 
 export default function Dashboard() {
   const { isPending, data: session } = authClient.useSession();
@@ -26,22 +36,66 @@ export default function Dashboard() {
   const [today, setToday] = useState(new Date());
 
   const { data: userConfig, isLoading: isUserConfigLoading } = useGetUserConfig(
-    session?.user.id ?? "",
+    session?.user.id ?? ""
   );
   const hasDagrCalendar = userConfig?.dagrCalendarId !== undefined;
 
   const [selectedGoals, setSelectedGoals] = useState<Doc<"goals">[]>([]);
 
+  const talkWithAgent = useTalkWithAgent();
+  const queryClient = useQueryClient();
+  const [isMakingPlan, setIsMakingPlan] = useState(false);
+
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const canGenerateNextWeek =
+    differenceInDays(Date.now(), addDays(weekStart, 6)) <= 1;
+  const [hasGeneratedNextWeek, setHasGeneratedNextWeek] = useState(false);
+  const { data: currentWeekEvents, isLoading: isLoadingCurrentWeekEvents } =
+    useGetAllEventsForUser({
+      userId: session?.user.id ?? "",
+      calendarIds:
+        userConfig?.calendars.items.map((calendar) => calendar.id) ?? [],
+      timeMin: weekStart.toISOString(),
+      timeMax: addDays(weekStart, 6).toISOString(),
+      maxEvents: 2500,
+    });
+  const { data: nextWeekEvents, isLoading: isLoadingNextWeekEvents } =
+    useGetAllEventsForUser({
+      userId: session?.user.id ?? "",
+      calendarIds:
+        userConfig?.calendars.items.map((calendar) => calendar.id) ?? [],
+      timeMin: addDays(weekStart, 7).toISOString(),
+      timeMax: addDays(weekStart, 13).toISOString(),
+      maxEvents: 2500,
+    });
+  const { data: nextWeekDagrEvents } = useGetAllEventsForUser({
+    userId: session?.user.id ?? "",
+    calendarIds: [userConfig?.dagrCalendarId ?? ""],
+    timeMin: addDays(weekStart, 7).toISOString(),
+    timeMax: addDays(weekStart, 13).toISOString(),
+    maxEvents: 2500,
+  });
+
+  useEffect(() => {
+    if (nextWeekDagrEvents?.length) {
+      setHasGeneratedNextWeek(true);
+    }
+  }, [nextWeekDagrEvents]);
+
+  const syncGoogleCalendarMutation = useSyncGoogleCalendarWithUserConfig();
+  const handleSyncGoogleCalendar = async () => {
+    if (!userConfig?._id) return;
+    return syncGoogleCalendarMutation.mutateAsync({
+      userId: session?.user.id ?? "",
+      userConfigId: userConfig._id,
+    });
+  };
+
+  const [chatMessage, setChatMessage] = useState("");
+
   if (isPending || isUserConfigLoading)
     return <Interstitial message="Loading..." />;
   if (!session) redirect("/auth");
-
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-
-  const canGenerateNextWeek =
-    differenceInDays(Date.now(), addDays(weekStart, 6)) <= 1;
-  const hasGeneratedNextWeek = false; /* TODO: add this back in */
-  const isGeneratingNextWeek = false; /* TODO: add this back in */
 
   const handleSeeNextWeek = () => {
     setToday(addDays(weekStart, 7));
@@ -50,12 +104,66 @@ export default function Dashboard() {
     setToday(new Date());
   };
 
-  const handleGenerateNextWeek = () => {
-    console.log("Generate Next Week");
+  const handleMakePlan = async (
+    calendarEvents: CalendarEvent[],
+    userMessage?: string
+  ) => {
+    await talkWithAgent.mutateAsync({
+      userId: session?.user.id ?? "",
+      messages: [
+        generatePlannerPrompt({
+          goals: selectedGoals,
+          calendarEvents,
+          userPersona: userConfig?.preferences.userPersona ?? "",
+          motivations: userConfig?.preferences.motivations ?? "",
+          userMessage,
+        }),
+      ],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["calendar", "getAllEventsForUser"],
+    });
   };
 
-  const handlePlanWeek = () => {
-    console.log("Plan Week");
+  const handleGenerateNextWeek = async () => {
+    if (!nextWeekEvents || isLoadingNextWeekEvents) return;
+    setIsMakingPlan(true);
+    try {
+      setHasGeneratedNextWeek(true);
+      await handleMakePlan(nextWeekEvents);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsMakingPlan(false);
+    }
+  };
+  const handlePlanWeek = async () => {
+    if (!currentWeekEvents || isLoadingCurrentWeekEvents) return;
+    setIsMakingPlan(true);
+    try {
+      await handleMakePlan(currentWeekEvents);
+      if (!hasDagrCalendar) {
+        await handleSyncGoogleCalendar();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsMakingPlan(false);
+    }
+  };
+  const handleSendChatMessage = async () => {
+    if (!chatMessage || isMakingPlan || !currentWeekEvents) return;
+    const message = chatMessage;
+    setChatMessage("");
+    setIsMakingPlan(true);
+    try {
+      await handleMakePlan(currentWeekEvents, message);
+    } catch (error) {
+      console.error(error);
+      setChatMessage(message);
+    } finally {
+      setIsMakingPlan(false);
+    }
   };
 
   return (
@@ -72,32 +180,33 @@ export default function Dashboard() {
               Week of {formatDate(weekStart, "MMMM d, yyyy")}
             </h1>
             <div className="flex items-center gap-2">
-              {!isSameDay(today, new Date()) && (
-                <Button onClick={handleSeePreviousWeek}>Today</Button>
-              )}
               {hasDagrCalendar ? (
-                <Button
-                  disabled={
-                    (!canGenerateNextWeek && !hasGeneratedNextWeek) ||
-                    selectedGoals.length === 0
-                  }
-                  onClick={
-                    hasGeneratedNextWeek
-                      ? handleSeeNextWeek
-                      : handleGenerateNextWeek
-                  }
-                >
-                  {hasGeneratedNextWeek ? (
-                    "See Next Week"
-                  ) : (
-                    <>
-                      <SparklesIcon className="size-4" />
-                      {isGeneratingNextWeek
-                        ? "Generating..."
-                        : "Generate Next Week"}
-                    </>
-                  )}
-                </Button>
+                !isSameDay(today, new Date()) ? (
+                  <Button onClick={handleSeePreviousWeek}>Today</Button>
+                ) : (
+                  <Button
+                    disabled={
+                      !(canGenerateNextWeek || selectedGoals.length === 0) &&
+                      !hasGeneratedNextWeek
+                    }
+                    onClick={
+                      hasGeneratedNextWeek
+                        ? handleSeeNextWeek
+                        : handleGenerateNextWeek
+                    }
+                  >
+                    {hasGeneratedNextWeek ? (
+                      "See Next Week"
+                    ) : (
+                      <>
+                        <SparklesIcon className="size-4" />
+                        {isMakingPlan /* TODO: Improve this loader to be unique to the button */
+                          ? "Generating..."
+                          : "Generate Next Week"}
+                      </>
+                    )}
+                  </Button>
+                )
               ) : null}
             </div>
           </div>
@@ -114,11 +223,22 @@ export default function Dashboard() {
                 className="h-12 shrink-0 w-3/4 rounded-4xl"
                 placeholder="Any changes?"
                 rightAdornment={
-                  <Button className="rounded-full">
+                  <Button
+                    className="rounded-full"
+                    disabled={!chatMessage || isMakingPlan}
+                    onClick={handleSendChatMessage}
+                  >
                     <SparkleIcon className="size-4" />
                     Send
                   </Button>
                 }
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendChatMessage();
+                  }
+                }}
               />
             </>
           ) : (
@@ -127,11 +247,11 @@ export default function Dashboard() {
                 Pick some goals and let&apos;s plan your week!
               </p>
               <Button
-                disabled={selectedGoals.length === 0}
+                disabled={selectedGoals.length === 0 || isMakingPlan}
                 onClick={handlePlanWeek}
               >
                 <SparklesIcon />
-                Plan
+                {isMakingPlan ? "Planning..." : "Plan"}
               </Button>
             </div>
           )}

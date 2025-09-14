@@ -32,6 +32,12 @@ export default function CalendarComponent({
     timeMin: weekStart.toISOString(),
     timeMax: weekEnd.toISOString(),
   });
+  const { data: dagrEvents } = useGetAllEventsForUser({
+    userId: session?.user?.id ?? "",
+    calendarIds: [userConfig?.dagrCalendarId ?? ""],
+    timeMin: weekStart.toISOString(),
+    timeMax: weekEnd.toISOString(),
+  });
 
   if (isSessionPending || isUserConfigLoading || isEventsLoading) {
     return <Skeleton className="w-full h-full rounded-md" />;
@@ -47,14 +53,16 @@ export default function CalendarComponent({
                 !event.start.date &&
                 !event.end.date &&
                 event.start.dateTime &&
-                event.end.dateTime,
+                event.end.dateTime
             )
             .map((event) => ({
               start: new Date(event.start.dateTime ?? ""),
               end: new Date(event.end.dateTime ?? ""),
               title: event.summary,
               color: "pink",
-              readonly: true,
+              readonly: !!dagrEvents?.every(
+                (dagrEvent) => dagrEvent.id !== event.id
+              ),
               id: event.id,
             })) ?? []
         }

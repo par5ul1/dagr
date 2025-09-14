@@ -4,7 +4,7 @@ import {
   useConvexAction,
   useConvexMutation,
 } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/../convex/_generated/api";
 
 export function useCreateUserConfig() {
@@ -29,9 +29,15 @@ export function useUpdateUserConfig() {
 }
 
 export function useSyncGoogleCalendarWithUserConfig() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: useConvexAction(
-      api.userConfig.syncGoogleCalendarWithUserConfig,
+      api.userConfig.syncGoogleCalendarWithUserConfig
     ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["calendar", "getAllEventsForUser"],
+      });
+    },
   });
 }

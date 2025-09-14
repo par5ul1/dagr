@@ -5,6 +5,7 @@ import { authComponent, createAuth, nonNullAssertion } from "./auth";
 import { GOOGLE_CALENDAR_API_BASE_URL } from "./userConfig";
 
 export const calendarEventSchema = v.object({
+  title: v.string(),
   created: v.string(),
   creator: v.object({
     displayName: v.string(),
@@ -78,21 +79,21 @@ export const getAllEventsForUser = action({
               "Content-Type": "application/json",
             },
             cache: "only-if-cached",
-          },
+          }
         );
         if (!response.ok) {
           throw new Error(
-            `Google API error: ${response.status} ${response.statusText}`,
+            `Google API error: ${response.status} ${response.statusText}`
           );
         }
 
         const data = (await response.json()).items;
         return data as CalendarEvent[];
-      }),
+      })
     );
 
     const rejectedEvents = events.filter(
-      (event) => event.status === "rejected",
+      (event) => event.status === "rejected"
     );
 
     if (rejectedEvents.length > 0) {
@@ -100,7 +101,7 @@ export const getAllEventsForUser = action({
     }
 
     const fulfilledEvents = events.filter(
-      (event) => event.status === "fulfilled",
+      (event) => event.status === "fulfilled"
     );
 
     return fulfilledEvents.flatMap((event) => event.value);
@@ -126,7 +127,7 @@ export const insertCalendarEventSchema = v.object({
       date: v.optional(v.string()),
       dateTime: v.optional(v.string()),
       timeZone: v.optional(v.string()),
-    }),
+    })
   ),
   id: v.optional(v.string()),
   title: v.optional(v.string()),
@@ -178,7 +179,7 @@ export const insertCalendarEvent = action({
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-      },
+      }
     );
 
     if (!response.ok)

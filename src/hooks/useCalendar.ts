@@ -19,7 +19,15 @@ export function useGetAllEventsForUser({
   const fn = useConvexAction(api.calendar.getAllEventsForUser);
 
   return useQuery({
-    queryKey: ["calendar", "getAllEventsForUser", userId],
+    queryKey: [
+      "calendar",
+      "getAllEventsForUser",
+      calendarIds,
+      timeMin,
+      timeMax,
+      maxEvents,
+      userId,
+    ],
     queryFn: () =>
       fn({
         userId,

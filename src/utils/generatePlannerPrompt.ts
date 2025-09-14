@@ -1,3 +1,6 @@
+import type { Doc } from "../../convex/_generated/dataModel";
+import type { CalendarEvent } from "../../convex/calendar";
+
 export default function generatePlannerPrompt({
   goals,
   calendarEvents,
@@ -5,8 +8,8 @@ export default function generatePlannerPrompt({
   motivations,
   userMessage,
 }: {
-  goals: string;
-  calendarEvents: string;
+  goals: Doc<"goals">[];
+  calendarEvents: Pick<CalendarEvent, "title" | "summary" | "start" | "end">[];
   userPersona: string;
   motivations: string;
   userMessage?: string;
