@@ -1,6 +1,9 @@
 "use client";
 
 import { FileText, Home, MessageSquare, Settings } from "lucide-react";
+import Image from "next/image";
+import logo from "@/app/icon.png";
+import { NavUser } from "@/components/NavUser";
 import {
   Sidebar,
   SidebarContent,
@@ -12,16 +15,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { NavUser } from "@/components/NavUser";
 
 export default function SidebarComponent() {
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground">
-            <span className="text-sm font-bold">D</span>
-          </div>
+          <Image src={logo.src} alt="Dagr" width={32} height={32} />
           <span className="font-semibold">Dagr</span>
         </div>
       </SidebarHeader>
