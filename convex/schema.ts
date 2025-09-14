@@ -13,6 +13,7 @@ export default defineSchema({
       items: v.array(
         v.union(
           v.object({
+            id: v.string(),
             summary: v.string(),
             description: v.string(),
             timeZone: v.string(),

@@ -17,9 +17,10 @@ const MIN_DAY_WIDTH = 150; /* Minimum width for each day column */
 export type CalendarEvent = {
   id: string;
   title: string;
-  color: string;
   start: Date;
   end: Date;
+  readonly: boolean;
+  color: string;
 };
 
 export type CalendarProps = {
@@ -53,19 +54,35 @@ function useCalendarContext() {
 
 function getOverlappingEvents(
   currentEvent: CalendarEvent,
-  events: CalendarEvent[]
+  events: CalendarEvent[],
+  currentDate: Date
 ): CalendarEvent[] {
   return events.filter((event) => {
     if (event.id === currentEvent.id) return false;
-    return (
-      currentEvent.start < event.end &&
-      currentEvent.end > event.start &&
-      isSameDay(currentEvent.start, event.start)
-    );
+
+    const eventsOverlap =
+      currentEvent.start < event.end && currentEvent.end > event.start;
+
+    const dayStart = startOfDay(currentDate);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const currentEventVisible =
+      isSameDay(currentEvent.start, currentDate) ||
+      (currentEvent.start < dayEnd && currentEvent.end > dayStart);
+
+    const eventVisible =
+      isSameDay(event.start, currentDate) ||
+      (event.start < dayEnd && event.end > dayStart);
+
+    return eventsOverlap && currentEventVisible && eventVisible;
   });
 }
 
-function getEventGroups(events: CalendarEvent[]): CalendarEvent[][] {
+function getEventGroups(
+  events: CalendarEvent[],
+  currentDate: Date
+): CalendarEvent[][] {
   const groups: CalendarEvent[][] = [];
   const processed = new Set<string>();
 
@@ -75,7 +92,7 @@ function getEventGroups(events: CalendarEvent[]): CalendarEvent[][] {
     const group = [event];
     processed.add(event.id);
 
-    const overlapping = getOverlappingEvents(event, events);
+    const overlapping = getOverlappingEvents(event, events, currentDate);
     overlapping.forEach((overlappingEvent) => {
       if (!processed.has(overlappingEvent.id)) {
         group.push(overlappingEvent);
@@ -92,23 +109,37 @@ function getEventGroups(events: CalendarEvent[]): CalendarEvent[][] {
 
 function calculateEventPosition(
   event: CalendarEvent,
-  allEvents: CalendarEvent[]
+  allEvents: CalendarEvent[],
+  currentDate: Date
 ): React.CSSProperties {
-  const dayEvents = allEvents.filter((e) => isSameDay(e.start, event.start));
+  const dayEvents = allEvents.filter((e) => {
+    const eventStart = e.start;
+    const eventEnd = e.end;
+    const dayStart = startOfDay(currentDate);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
 
-  const groups = getEventGroups(dayEvents);
+    return (
+      isSameDay(eventStart, currentDate) ||
+      (eventStart < dayEnd && eventEnd > dayStart)
+    );
+  });
+
+  const groups = getEventGroups(dayEvents, currentDate);
   const group = groups.find((g) => g.some((e) => e.id === event.id));
 
-  if (!group) {
-    const startHour = event.start.getHours();
-    const startMinutes = event.start.getMinutes();
-    let endHour = event.end.getHours();
-    let endMinutes = event.end.getMinutes();
+  const dayStart = startOfDay(currentDate);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setHours(23, 59, 59, 999);
 
-    if (!isSameDay(event.start, event.end)) {
-      endHour = 23;
-      endMinutes = 59;
-    }
+  const effectiveStart = event.start > dayStart ? event.start : dayStart;
+  const effectiveEnd = event.end < dayEnd ? event.end : dayEnd;
+
+  if (!group) {
+    const startHour = effectiveStart.getHours();
+    const startMinutes = effectiveStart.getMinutes();
+    const endHour = effectiveEnd.getHours();
+    const endMinutes = effectiveEnd.getMinutes();
 
     const topPosition =
       startHour * HOUR_HEIGHT + (startMinutes / 60) * HOUR_HEIGHT;
@@ -131,16 +162,10 @@ function calculateEventPosition(
   const width = `${100 / totalEvents}%`;
   const left = `${(position * 100) / totalEvents}%`;
 
-  const startHour = event.start.getHours();
-  const startMinutes = event.start.getMinutes();
-
-  let endHour = event.end.getHours();
-  let endMinutes = event.end.getMinutes();
-
-  if (!isSameDay(event.start, event.end)) {
-    endHour = 23;
-    endMinutes = 59;
-  }
+  const startHour = effectiveStart.getHours();
+  const startMinutes = effectiveStart.getMinutes();
+  const endHour = effectiveEnd.getHours();
+  const endMinutes = effectiveEnd.getMinutes();
 
   const topPosition =
     startHour * HOUR_HEIGHT + (startMinutes / 60) * HOUR_HEIGHT;
@@ -156,9 +181,20 @@ function calculateEventPosition(
   };
 }
 
-function CalendarEvent({ event }: { event: CalendarEvent }) {
+function CalendarEvent({
+  event,
+  currentDate,
+}: {
+  event: CalendarEvent;
+  currentDate: Date;
+}) {
   const { events, onEventClick } = useCalendarContext();
-  const style = calculateEventPosition(event, events);
+  const style = calculateEventPosition(event, events, currentDate);
+
+  const isEventStart = isSameDay(event.start, currentDate);
+  const isEventEnd = isSameDay(event.end, currentDate);
+  const isMultiDay = !isSameDay(event.start, event.end);
+  const isContinuation = isMultiDay && !isEventStart;
 
   return (
     <div style={{ ...style }} className="px-1">
@@ -169,13 +205,10 @@ function CalendarEvent({ event }: { event: CalendarEvent }) {
             type="button"
             className={cn(
               "w-full h-[inherit] px-2 py-1 rounded-md truncate cursor-pointer transition-all duration-200 text-left flex flex-col",
-              "bg-[var(--_color)]/25 hover:bg-[var(--_color)]/20 border border-[var(--_color)] text-[var(--_color)]"
+              event.readonly
+                ? "bg-gray-200/20 border border-gray-500 text-gray-200"
+                : "bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500 text-amber-500"
             )}
-            style={
-              {
-                "--_color": event.color,
-              } as React.CSSProperties
-            }
             onClick={(e) => {
               e.stopPropagation();
               onEventClick?.(event);
@@ -183,7 +216,8 @@ function CalendarEvent({ event }: { event: CalendarEvent }) {
           >
             <p className="font-bold truncate text-xs">{event.title}</p>
             <p className="text-xs truncate">
-              {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
+              {isEventStart && format(event.start, "h:mm a")} -{" "}
+              {isEventEnd && format(event.end, "h:mm a")}
             </p>
           </button>
         </TooltipTrigger>
@@ -260,7 +294,19 @@ function TimeColumn() {
 function DayColumn({ date }: { date: Date }) {
   const isToday = isSameDay(date, new Date());
   const { events } = useCalendarContext();
-  const dayEvents = events.filter((event) => isSameDay(event.start, date));
+
+  const dayEvents = events.filter((event) => {
+    const eventStart = event.start;
+    const eventEnd = event.end;
+    const dayStart = startOfDay(date);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    return (
+      isSameDay(eventStart, date) ||
+      (eventStart < dayEnd && eventEnd > dayStart)
+    );
+  });
 
   return (
     <div
@@ -269,7 +315,7 @@ function DayColumn({ date }: { date: Date }) {
       style={{ minWidth: MIN_DAY_WIDTH }}
     >
       <CalendarHeader date={date} />
-      <div className="flex-1 relative cursor-pointer">
+      <div className="flex-1 relative">
         {HOURS_IN_DAY.map((hour) => (
           <div
             key={hour}
@@ -278,7 +324,7 @@ function DayColumn({ date }: { date: Date }) {
           />
         ))}
         {dayEvents.map((event) => (
-          <CalendarEvent key={event.id} event={event} />
+          <CalendarEvent key={event.id} event={event} currentDate={date} />
         ))}
         {isToday && <CurrentTimeline />}
       </div>
@@ -328,7 +374,7 @@ function CalendarBody() {
         HOUR_HEIGHT * 2; /* Show 2 hours before current time */
 
       const currentDay = now.getDay();
-      const mondayOffset = currentDay === 0 ? 6 : currentDay - 1; // Convert Sunday=0 to Monday=0
+      const mondayOffset = currentDay === 0 ? 6 : currentDay - 1;
       const scrollLeft = mondayOffset * MIN_DAY_WIDTH;
 
       const scrollContainer = scrollAreaRef.current.querySelector(

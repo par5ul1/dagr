@@ -13,7 +13,8 @@ export const calendarEventSchema = v.object({
   }),
   description: v.string(),
   end: v.object({
-    date: v.string(),
+    dateTime: v.optional(v.string()),
+    date: v.optional(v.string()),
   }),
   etag: v.string(),
   eventType: v.string(),
@@ -28,7 +29,8 @@ export const calendarEventSchema = v.object({
   }),
   sequence: v.number(),
   start: v.object({
-    date: v.string(),
+    dateTime: v.optional(v.string()),
+    date: v.optional(v.string()),
   }),
   status: v.string(),
   summary: v.string(),
@@ -63,7 +65,7 @@ export const getAllEventsForUser = action({
       throw new Error(`Failed to get access token: ${error}`);
     }
 
-    const events = await Promise.all(
+    const events = await Promise.allSettled(
       args.calendarIds.map(async (calendarId) => {
         const response = await fetch(
           `${GOOGLE_CALENDAR_API_BASE_URL}/calendars/${encodeURIComponent(calendarId.trim())}/events?timeMin=${args.timeMin}&timeMax=${args.timeMax}`,
@@ -81,12 +83,25 @@ export const getAllEventsForUser = action({
             `Google API error: ${response.status} ${response.statusText}`
           );
         }
+
         const data = (await response.json()).items;
         return data as CalendarEvent[];
       })
     );
 
-    return events.flat();
+    const rejectedEvents = events.filter(
+      (event) => event.status === "rejected"
+    );
+
+    if (rejectedEvents.length > 0) {
+      console.error(JSON.stringify(rejectedEvents, null, 2));
+    }
+
+    const fulfilledEvents = events.filter(
+      (event) => event.status === "fulfilled"
+    );
+
+    return fulfilledEvents.flatMap((event) => event.value);
   },
 });
 
