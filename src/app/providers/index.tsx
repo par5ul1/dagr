@@ -1,5 +1,6 @@
+import * as ConvexClientProvider from "./ConvexClientProvider";
+import QueryClientProvider from "./QueryClientProvider";
 import type { ReactNode } from "react";
-import { ConvexClientProvider } from "./ConvexClientProvider";
 import { ThemeProvider } from "./ThemeProvider";
 
 export default function Providers({ children }: { children: ReactNode }) {
@@ -10,7 +11,9 @@ export default function Providers({ children }: { children: ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <ConvexClientProvider>{children}</ConvexClientProvider>
+      <ConvexClientProvider.ConvexClientProvider>
+        <QueryClientProvider>{children}</QueryClientProvider>
+      </ConvexClientProvider.ConvexClientProvider>
     </ThemeProvider>
   );
 }

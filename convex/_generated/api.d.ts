@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as calendar from "../calendar.js";
 import type * as goals from "../goals.js";
 import type * as http from "../http.js";
 import type * as userConfig from "../userConfig.js";
@@ -29,6 +30,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  calendar: typeof calendar;
   goals: typeof goals;
   http: typeof http;
   userConfig: typeof userConfig;

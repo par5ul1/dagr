@@ -5,6 +5,21 @@ export default defineSchema({
   userConfig: defineTable({
     userId: v.string(),
     preferences: v.string(),
+    calendars: v.object({
+      items: v.array(
+        v.union(
+          v.object({
+            summary: v.string(),
+            description: v.string(),
+            timeZone: v.string(),
+            colorId: v.string(),
+            backgroundColor: v.string(),
+            foregroundColor: v.string(),
+          }),
+          v.record(v.string(), v.any()),
+        ),
+      ),
+    }),
   }).index("by_userId", ["userId"]),
   goals: defineTable({
     userId: v.string(),

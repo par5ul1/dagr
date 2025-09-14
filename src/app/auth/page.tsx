@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,12 +36,12 @@ export default function SignIn() {
   }, []);
 
   return (
-    <div className="max-w-md">
-      <Card className="max-w-md">
+    <div className="h-[100dvh] flex items-center justify-center">
+      <Card className="w-md">
         <CardHeader>
           <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
           <CardDescription className="text-xs md:text-sm">
-            Enter your email below to login to your account
+            Loin/Register with your Google account.
           </CardDescription>
         </CardHeader>
         <CardContent>
