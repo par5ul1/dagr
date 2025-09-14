@@ -86,12 +86,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const { data: goals = [] } = useGetGoalsByUserId(userId || "");
 
   useEffect(() => {
-    console.log({
-      userId,
-      isSessionPending,
-      isUserConfigLoading,
-      userConfig,
-    });
     if (isSessionPending) {
       setIsLoading(true);
       return;

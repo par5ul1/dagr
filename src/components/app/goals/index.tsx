@@ -24,8 +24,10 @@ import { Textarea } from "@/components/ui/textarea";
 
 type GoalCardProps = {
   goal: Doc<"goals">;
+  isSelected?: boolean;
   onEdit?: (goal: Doc<"goals">) => void;
   onSelect?: (goal: Doc<"goals">) => void;
+  onUnselect?: (goal: Doc<"goals">) => void;
 };
 const PRIORITIES = [
   {
@@ -45,15 +47,13 @@ const PRIORITIES = [
   },
 ];
 
-function GoalCard({ goal, onEdit, onSelect }: GoalCardProps) {
-  const handleSelect = () => {
-    onSelect?.(goal);
-  };
-
-  const handleEdit = () => {
-    onEdit?.(goal);
-  };
-
+function GoalCard({
+  goal,
+  isSelected,
+  onEdit,
+  onSelect,
+  onUnselect,
+}: GoalCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -77,15 +77,19 @@ function GoalCard({ goal, onEdit, onSelect }: GoalCardProps) {
         </CardContent>
         <CardFooter className="flex gap-2 justify-end mt-2 px-0">
           {onEdit ? (
-            <Button size="sm" variant="secondary" onClick={handleEdit}>
+            <Button size="sm" variant="secondary" onClick={() => onEdit(goal)}>
               <PencilIcon className="w-4 h-4" />
               Edit
             </Button>
           ) : null}
-          {onSelect ? (
-            <Button size="sm" variant="outline">
+          {onSelect && onUnselect ? (
+            <Button
+              size="sm"
+              variant={isSelected ? "default" : "outline"}
+              onClick={() => (isSelected ? onUnselect(goal) : onSelect(goal))}
+            >
               <CheckIcon className="w-4 h-4" />
-              Select
+              {isSelected ? "Selected" : "Select"}
             </Button>
           ) : null}
         </CardFooter>

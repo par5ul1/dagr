@@ -65,7 +65,7 @@ export const talkWithAgent = action({
             })),
           },
         ],
-      },
+      }
     );
 
     const result = await structureOutputMakerAgent.generateObject(
@@ -95,10 +95,10 @@ export const talkWithAgent = action({
                 .string()
                 .describe("Detailed description of the event"),
               summary: z.string().describe("Short summary of the event"),
-            }),
+            })
           ),
         }),
-      },
+      }
     );
 
     const events = result.object.items.map(
@@ -110,18 +110,18 @@ export const talkWithAgent = action({
           start: {
             dateTime: createDateFromStrings(
               item.startDay,
-              item.startTime,
+              item.startTime
             ).toISOString(),
             timeZone: "America/Los_Angeles",
           },
           end: {
             dateTime: createDateFromStrings(
               item.endDay,
-              item.endTime,
+              item.endTime
             ).toISOString(),
             timeZone: "America/Los_Angeles",
           },
-        }) as CalendarEvent & { title: string },
+        }) as CalendarEvent & { title: string }
     );
 
     await ctx.runAction(api.calendar.insertCalendarEvent, {
@@ -140,8 +140,8 @@ export const talkWithAgent = action({
             ...event,
             title: event.title,
           },
-        }),
-      ),
+        })
+      )
     );
   },
 });

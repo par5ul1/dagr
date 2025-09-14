@@ -7,10 +7,12 @@ import {
   FlameIcon,
   Link2Icon,
   LogOutIcon,
+  PaintbrushIcon,
   SlidersHorizontalIcon,
   UserIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -122,6 +131,7 @@ export function UserSection() {
             <DropdownMenuSeparator />
             <PreferencesSection />
             <IntegrationSection />
+            <ThemeSwitcher />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOutIcon />
               Log out
@@ -315,5 +325,29 @@ function IntegrationSection() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ThemeSwitcher() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <DropdownMenuItem
+      className="flex items-center gap-2"
+      onSelect={(e) => e.preventDefault()}
+    >
+      <PaintbrushIcon />
+      Theme
+      <Select value={theme} onValueChange={(value) => setTheme(value)}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select a theme" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="light">Light</SelectItem>
+          <SelectItem value="dark">Dark</SelectItem>
+          <SelectItem value="system">System</SelectItem>
+        </SelectContent>
+      </Select>
+    </DropdownMenuItem>
   );
 }

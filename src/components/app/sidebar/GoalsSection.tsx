@@ -1,6 +1,7 @@
 import { PlusIcon, SearchIcon, Settings2Icon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -24,13 +25,37 @@ import { authClient } from "@/lib/authClient";
 import type { Doc } from "../../../../convex/_generated/dataModel";
 import { GoalCard, GoalForm } from "../goals";
 
-export default function GoalsSection() {
+export default function GoalsSection({
+  selectedGoals,
+  setSelectedGoals,
+}: {
+  selectedGoals: Doc<"goals">[];
+  setSelectedGoals: (goals: Doc<"goals">[]) => void;
+}) {
   return (
-    <SidebarGroup>
+    <SidebarGroup className="flex flex-col h-full gap-2">
       <SidebarGroupLabel className="flex justify-between text-sm">
         This Week&apos;s Goals
-        <ManageGoalsModal />
+        <ManageGoalsModal
+          selectedGoals={selectedGoals}
+          setSelectedGoals={setSelectedGoals}
+        />
       </SidebarGroupLabel>
+      <Card className="flex flex-col gap-2 h-full overflow-hidden rounded-lg p-2">
+        {selectedGoals.length > 0 ? (
+          <ScrollArea>
+            <div className="flex flex-col gap-2">
+              {selectedGoals.map((goal) => (
+                <GoalCard key={goal._id} goal={goal} />
+              ))}
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="h-full flex items-center justify-center p-4 text-muted-foreground">
+            No goals selected. Select some to get started.
+          </div>
+        )}
+      </Card>
     </SidebarGroup>
   );
 }
@@ -41,7 +66,13 @@ enum ManageGoalsModalView {
   Edit,
 }
 
-function ManageGoalsModal() {
+function ManageGoalsModal({
+  selectedGoals,
+  setSelectedGoals,
+}: {
+  selectedGoals: Doc<"goals">[];
+  setSelectedGoals: (goals: Doc<"goals">[]) => void;
+}) {
   const [view, setView] = useState<ManageGoalsModalView>(
     ManageGoalsModalView.Manage
   );
@@ -61,6 +92,8 @@ function ManageGoalsModal() {
               <ManageGoalsModalManageView
                 setView={setView}
                 setGoalToEdit={setGoalToEdit}
+                selectedGoals={selectedGoals}
+                setSelectedGoals={setSelectedGoals}
               />
             );
           case ManageGoalsModalView.Create:
@@ -77,9 +110,13 @@ function ManageGoalsModal() {
 function ManageGoalsModalManageView({
   setView,
   setGoalToEdit,
+  selectedGoals,
+  setSelectedGoals,
 }: {
   setView: (view: ManageGoalsModalView) => void;
   setGoalToEdit: (goal: Doc<"goals"> | null) => void;
+  selectedGoals: Doc<"goals">[];
+  setSelectedGoals: (goals: Doc<"goals">[]) => void;
 }) {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
@@ -95,6 +132,13 @@ function ManageGoalsModalManageView({
   const handleEdit = (goal: Doc<"goals">) => {
     setView(ManageGoalsModalView.Edit);
     setGoalToEdit(goal);
+  };
+
+  const handleSelect = (goal: Doc<"goals">) => {
+    setSelectedGoals([...selectedGoals, goal]);
+  };
+  const handleUnselect = (goal: Doc<"goals">) => {
+    setSelectedGoals(selectedGoals.filter((g) => g._id !== goal._id));
   };
 
   const filteredGoals = goals.filter(
@@ -149,16 +193,15 @@ function ManageGoalsModalManageView({
                   key={goal._id}
                   goal={goal}
                   onEdit={handleEdit}
-                  onSelect={() => {}}
+                  isSelected={selectedGoals.some((g) => g._id === goal._id)}
+                  onSelect={handleSelect}
+                  onUnselect={handleUnselect}
                 />
               ))
             )}
           </div>
         </ScrollArea>
       </div>
-      <DialogFooter>
-        <Button type="submit">Select Goals</Button>
-      </DialogFooter>
     </DialogContent>
   );
 }

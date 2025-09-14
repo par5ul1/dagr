@@ -15,9 +15,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import GoalsSection from "./GoalsSection";
 
-export default function SidebarComponent() {
+export default function SidebarComponent({
+  selectedGoals,
+  setSelectedGoals,
+}: {
+  selectedGoals: Doc<"goals">[];
+  setSelectedGoals: (goals: Doc<"goals">[]) => void;
+}) {
   return (
     <Sidebar>
       <SidebarHeader>
@@ -27,7 +34,10 @@ export default function SidebarComponent() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <GoalsSection />
+        <GoalsSection
+          selectedGoals={selectedGoals}
+          setSelectedGoals={setSelectedGoals}
+        />
       </SidebarContent>
       <SidebarFooter>
         <UserSection />

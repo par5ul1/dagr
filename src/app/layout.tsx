@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Glory, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 
-/* TODO: Update font */
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const glorySans = Glory({
+  variable: "--font-glory-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
-
 export const metadata: Metadata = {
   title: "Dagr",
   description: "" /* TODO: Add description */,
@@ -27,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased w-screen h-svh overflow-hidden`}
+        className={`${glorySans.variable} ${inter.variable} antialiased w-screen h-svh overflow-hidden`}
       >
         <Providers>{children}</Providers>
       </body>
