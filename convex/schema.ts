@@ -19,6 +19,7 @@ export default defineSchema({
             colorId: v.string(),
             backgroundColor: v.string(),
             foregroundColor: v.string(),
+            /* enabled: v.boolean(), */ /* TODO: add this back in */
           }),
           v.record(v.string(), v.any())
         )

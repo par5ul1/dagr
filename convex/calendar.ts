@@ -1,8 +1,8 @@
-import { Infer, v } from "convex/values";
+import { type Infer, v } from "convex/values";
+import { api } from "./_generated/api";
 import { action } from "./_generated/server";
 import { authComponent, createAuth, nonNullAssertion } from "./auth";
 import { GOOGLE_CALENDAR_API_BASE_URL } from "./userConfig";
-import { api } from "./_generated/api";
 
 export const calendarEventSchema = v.object({
   created: v.string(),
@@ -74,16 +74,16 @@ export const getAllEventsForUser = action({
               "Content-Type": "application/json",
             },
             cache: "only-if-cached",
-          },
+          }
         );
         if (!response.ok) {
           throw new Error(
-            `Google API error: ${response.status} ${response.statusText}`,
+            `Google API error: ${response.status} ${response.statusText}`
           );
         }
         const data = (await response.json()).items;
         return data as CalendarEvent[];
-      }),
+      })
     );
 
     return events.flat();
@@ -138,7 +138,7 @@ export const insertCalendarEvent = action({
 
     const response = await fetch(
       `${GOOGLE_CALENDAR_API_BASE_URL}/calendars/${encodeURIComponent(userConfig.dagrCalendarId?.trim() ?? nonNullAssertion("DagrCalendarId must exist in the userConfig"))}/events`,
-      {},
+      {}
     );
   },
 });

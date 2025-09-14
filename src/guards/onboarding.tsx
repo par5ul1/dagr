@@ -133,8 +133,7 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
         <Card className="w-96">
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading...</p>
+              <p className="text-muted-foreground animate-pulse">Loading...</p>
             </div>
           </CardContent>
         </Card>
