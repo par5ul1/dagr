@@ -1,8 +1,11 @@
 "use client";
 
 import {
+  CalendarIcon,
+  CalendarOffIcon,
   EllipsisVerticalIcon,
   FlameIcon,
+  Link2Icon,
   LogOutIcon,
   SlidersHorizontalIcon,
   UserIcon,
@@ -11,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -35,8 +39,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useGetUserConfig, useUpdateUserConfig } from "@/hooks/useUserConfig";
+import {
+  useGetUserConfig,
+  useSyncGoogleCalendarWithUserConfig,
+  useUpdateUserConfig,
+} from "@/hooks/useUserConfig";
 import { authClient } from "@/lib/authClient";
 import { nonNullAssertion } from "@/utils/nonNullAssertion";
 
@@ -112,6 +121,7 @@ export function UserSection() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <PreferencesSection />
+            <IntegrationSection />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOutIcon />
               Log out
@@ -123,7 +133,7 @@ export function UserSection() {
   );
 }
 
-export function PreferencesSection() {
+function PreferencesSection() {
   const [isOpen, setIsOpen] = useState(false);
   const [prompts, setPrompts] = useState({
     userPersona: "",
@@ -225,6 +235,82 @@ export function PreferencesSection() {
             disabled={updateUserConfigMutation.isPending || isLoadingConfig}
           >
             {updateUserConfigMutation.isPending ? "Saving..." : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function IntegrationSection() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { data: session } = authClient.useSession();
+  const user = session?.user ?? nonNullAssertion("User must be defined");
+
+  const { data: userConfig, isLoading: isLoadingConfig } = useGetUserConfig(
+    user.id
+  );
+
+  const syncGoogleCalendarMutation = useSyncGoogleCalendarWithUserConfig();
+  const handleSyncGoogleCalendar = () => {
+    if (!userConfig?._id) return;
+    syncGoogleCalendarMutation.mutate({
+      userId: user.id,
+      userConfigId: userConfig._id,
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <Link2Icon />
+          Integration
+        </DropdownMenuItem>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Integration</DialogTitle>
+          <DialogDescription>
+            Configure your Google Calendar integration below.
+          </DialogDescription>
+        </DialogHeader>
+        {isLoadingConfig ? (
+          <Skeleton className="w-full h-64 rounded-md" />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Connected Accounts</CardTitle>
+              <CardContent className="flex flex-col items-center gap-2 px-0 mt-4">
+                {userConfig?.calendars.items ? (
+                  userConfig.calendars.items.map((calendar) => (
+                    <div
+                      className="w-full grid grid-cols-[24px_1fr] gap-1 text-sm bg-muted p-1 rounded-md items-center"
+                      key={calendar.id}
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      {calendar.summary}
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <CalendarOffIcon className="w-4 h-4" />
+                    No calendars found
+                  </div>
+                )}
+              </CardContent>
+            </CardHeader>
+          </Card>
+        )}
+        <DialogFooter>
+          <Button
+            onClick={handleSyncGoogleCalendar}
+            disabled={syncGoogleCalendarMutation.isPending}
+          >
+            {syncGoogleCalendarMutation.isPending
+              ? "Syncing..."
+              : "Sync Google Calendar"}
           </Button>
         </DialogFooter>
       </DialogContent>

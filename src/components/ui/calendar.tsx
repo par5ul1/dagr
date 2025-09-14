@@ -5,6 +5,15 @@ import { CircleIcon } from "lucide-react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useInterval } from "usehooks-ts";
 import { cn } from "@/lib/utils";
+import { Badge } from "./badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
 import { ScrollArea, ScrollBar } from "./scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
@@ -189,6 +198,7 @@ function CalendarEvent({
   currentDate: Date;
 }) {
   const { events, onEventClick } = useCalendarContext();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const style = calculateEventPosition(event, events, currentDate);
 
   const isEventStart = isSameDay(event.start, currentDate);
@@ -196,41 +206,92 @@ function CalendarEvent({
   const isMultiDay = !isSameDay(event.start, event.end);
   const isContinuation = isMultiDay && !isEventStart;
 
+  const handleEventClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDialogOpen(true);
+    onEventClick?.(event);
+  };
+
   return (
-    <div style={{ ...style }} className="px-1">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            tabIndex={-1}
-            type="button"
-            className={cn(
-              "w-full h-[inherit] px-2 py-1 rounded-md truncate cursor-pointer transition-all duration-200 text-left flex flex-col",
-              event.readonly
-                ? "bg-gray-200/20 border border-gray-500 text-gray-200"
-                : "bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500 text-amber-500"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEventClick?.(event);
-            }}
-          >
-            <p className="font-bold truncate text-xs">{event.title}</p>
-            <p className="text-xs truncate">
-              {isEventStart && format(event.start, "h:mm a")} -{" "}
-              {isEventEnd && format(event.end, "h:mm a")}
-            </p>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="text-center">
-            <p className="font-semibold">{event.title}</p>
-            <p className="text-xs opacity-90">
-              {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
-            </p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <>
+      <div style={{ ...style }} className="px-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              tabIndex={-1}
+              type="button"
+              className={cn(
+                "w-full h-[inherit] px-2 py-1 rounded-md truncate cursor-pointer transition-all duration-200 text-left flex flex-col",
+                event.readonly
+                  ? "bg-gray-200/20 border border-gray-500 text-gray-200"
+                  : "bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500 text-amber-500",
+                isMultiDay && !isEventEnd && "rounded-br-none rounded-bl-none",
+                isContinuation && "rounded-tl-none rounded-tr-none"
+              )}
+              onClick={handleEventClick}
+            >
+              <p className="font-bold truncate text-xs">{event.title}</p>
+              <p className="text-xs truncate">
+                {isEventStart && format(event.start, "h:mm a")} -{" "}
+                {isEventEnd && format(event.end, "h:mm a")}
+              </p>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="text-center">
+              <p className="font-semibold">{event.title}</p>
+              <p className="text-xs opacity-90">
+                {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {event.title}
+              {event.readonly && (
+                <Badge variant="secondary" className="text-xs">
+                  Google Calendar
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">{event.title}</CardTitle>
+              <CardDescription>
+                {format(event.start, "EEEE, MMMM do, yyyy")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: event.color }}
+                />
+                <span className="text-sm font-medium">
+                  {format(event.start, "h:mm a")} -{" "}
+                  {format(event.end, "h:mm a")}
+                </span>
+              </div>
+
+              {event.readonly && (
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    This event is managed by Google Calendar and cannot be
+                    edited here.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

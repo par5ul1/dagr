@@ -3,6 +3,7 @@
 import { addWeeks, formatDate, startOfWeek, subWeeks } from "date-fns";
 import { useState } from "react";
 import { Calendar, type CalendarEvent } from "@/components/ui/calendar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAllEventsForUser } from "@/hooks/useCalendar";
 import { useGetUserConfig } from "@/hooks/useUserConfig";
 import { authClient } from "@/lib/authClient";
@@ -16,21 +17,27 @@ export default function CalendarComponent({
   setToday: (date: Date) => void;
   weekStart: Date;
 }) {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const userId = session?.user?.id ?? "";
-  const { data: userConfig } = useGetUserConfig(userId);
+  const { data: userConfig, isLoading: isUserConfigLoading } =
+    useGetUserConfig(userId);
   const calendarIds =
     userConfig?.calendars?.items?.map((calendar) => calendar.id) ?? [];
 
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
 
-  const { data: events } = useGetAllEventsForUser({
+  const { data: events, isLoading: isEventsLoading } = useGetAllEventsForUser({
     userId: session?.user?.id ?? "",
     calendarIds,
     timeMin: weekStart.toISOString(),
     timeMax: weekEnd.toISOString(),
   });
+
+  if (isSessionPending || isUserConfigLoading || isEventsLoading) {
+    return <Skeleton className="w-full h-full rounded-md" />;
+  }
 
   return (
     <div className="border-[1px] border-border rounded-md overflow-hidden">

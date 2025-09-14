@@ -71,6 +71,7 @@ export const createDagrCalendarForUser = action({
   },
 });
 
+/* TODO: Don't overwrite the enabled field when we have that */
 export const syncGoogleCalendarWithUserConfig = action({
   args: {
     userId: v.string(),

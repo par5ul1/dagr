@@ -86,6 +86,8 @@ function ManageGoalsModalManageView({
 
   const { data: goals = [], isLoading } = useGetGoalsByUserId(userId || "");
 
+  const [search, setSearch] = useState("");
+
   const handleCreate = () => {
     setView(ManageGoalsModalView.Create);
   };
@@ -94,6 +96,12 @@ function ManageGoalsModalManageView({
     setView(ManageGoalsModalView.Edit);
     setGoalToEdit(goal);
   };
+
+  const filteredGoals = goals.filter(
+    (goal) =>
+      goal.title.toLowerCase().includes(search.toLowerCase()) ||
+      goal.description?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <DialogContent className="w-4/5 h-4/5 !max-w-none grid-rows-[auto_1fr]">
@@ -111,6 +119,8 @@ function ManageGoalsModalManageView({
             }
             id="goal-search"
             placeholder="e.g. Schedule dentist appointment"
+            defaultValue={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
           <Separator orientation="vertical" />
           <Button variant="outline" onClick={handleCreate}>
@@ -128,8 +138,13 @@ function ManageGoalsModalManageView({
               <div className="col-span-full text-center py-8 text-muted-foreground">
                 No goals yet. Create your first goal!
               </div>
+            ) : filteredGoals.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                No goals found for search "{search}". Try searching for a
+                different keyword or creating a new goal.
+              </div>
             ) : (
-              goals.map((goal) => (
+              filteredGoals.map((goal) => (
                 <GoalCard
                   key={goal._id}
                   goal={goal}

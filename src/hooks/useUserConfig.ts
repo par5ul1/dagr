@@ -1,5 +1,9 @@
 "use client";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import {
+  convexQuery,
+  useConvexAction,
+  useConvexMutation,
+} from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/../convex/_generated/api";
 
@@ -14,7 +18,6 @@ export function useGetUserConfig(userId: string) {
     ...convexQuery(api.userConfig.getUserConfig, {
       userId,
     }),
-    initialData: null,
     enabled: !!userId,
   });
 }
@@ -22,5 +25,13 @@ export function useGetUserConfig(userId: string) {
 export function useUpdateUserConfig() {
   return useMutation({
     mutationFn: useConvexMutation(api.userConfig.updateUserConfig),
+  });
+}
+
+export function useSyncGoogleCalendarWithUserConfig() {
+  return useMutation({
+    mutationFn: useConvexAction(
+      api.userConfig.syncGoogleCalendarWithUserConfig
+    ),
   });
 }
