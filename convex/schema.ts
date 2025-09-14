@@ -5,6 +5,7 @@ export default defineSchema({
   userConfig: defineTable({
     userId: v.string(),
     preferences: v.string(),
+    dagrCalendarId: v.optional(v.string()),
     calendars: v.object({
       items: v.array(
         v.union(

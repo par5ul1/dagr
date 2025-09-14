@@ -5,7 +5,7 @@ import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 
-const nonNullAssertion = (message: string) => {
+export const nonNullAssertion = (message: string) => {
   throw new Error(`NonNullAssetion: ${message}`);
 };
 

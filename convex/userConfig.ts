@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
-import { authComponent, createAuth } from "./auth";
-import { api, internal } from "./_generated/api";
+import { authComponent, createAuth, nonNullAssertion } from "./auth";
+import { api } from "./_generated/api";
 import schema from "./schema";
 
 export const GOOGLE_CALENDAR_API_BASE_URL =
@@ -15,6 +15,59 @@ export const getUserConfig = query({
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .first();
     return userConfig;
+  },
+});
+
+export const createDagrCalendarForUser = action({
+  args: { userId: v.string() },
+  async handler(ctx, args) {
+    let accessToken: string;
+    try {
+      accessToken = (
+        await createAuth(ctx).api.getAccessToken({
+          body: {
+            providerId: "google",
+            userId: args.userId,
+          },
+          headers: await authComponent.getHeaders(ctx),
+        })
+      ).accessToken;
+    } catch (error) {
+      throw new Error(`Failed to get access token: ${error}`);
+    }
+
+    const id = `dagr-${args.userId}`;
+
+    const response = await fetch(
+      `${GOOGLE_CALENDAR_API_BASE_URL}/users/me/calendarList`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          id,
+        }),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        cache: "only-if-cached",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Google API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const userConfig =
+      (await ctx.runQuery(api.userConfig.getUserConfig, {
+        userId: args.userId,
+      })) ?? nonNullAssertion("User config not found");
+
+    await ctx.runMutation(api.userConfig.updateUserConfig, {
+      id: userConfig._id,
+      calendarId: id,
+    });
   },
 });
 
@@ -93,6 +146,7 @@ export const updateUserConfig = mutation({
     id: v.id("userConfig"),
     preferences: v.optional(v.string()),
     calendars: v.optional(schema.tables.userConfig.validator.fields.calendars),
+    calendarId: v.optional(v.string()),
   },
 
   async handler(ctx, args) {
@@ -105,6 +159,7 @@ export const updateUserConfig = mutation({
     const updates = {
       preferences: args.preferences ?? userConfig.preferences,
       calendars: args.calendars ?? userConfig.calendars,
+      dagrCalendarId: args.calendarId ?? userConfig.dagrCalendarId,
     };
 
     await ctx.db.patch(args.id, updates);
