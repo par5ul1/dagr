@@ -7,6 +7,11 @@ export const getGoalsByUserId = query({
     return ctx.db
       .query("goals")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter(
+        (q) =>
+          q.eq(q.field("deletedAt"), undefined) ||
+          q.eq(q.field("deletedAt"), null)
+      ) /* TODO: Add index */
       .collect();
   },
 });
@@ -16,17 +21,15 @@ export const createGoal = mutation({
     userId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
+    priority: v.optional(v.number()),
   },
-  handler: async (ctx, { userId, title, description }) => {
-    const now = new Date();
+  handler: async (ctx, { userId, title, description, priority = 1 }) => {
     const goal = {
       userId,
       title,
       description,
       progress: 0,
-      createdAt: now,
-      updatedAt: now,
-      completed: false,
+      priority,
     };
     const id = await ctx.db.insert("goals", goal);
     return ctx.db.get(id);
@@ -39,7 +42,8 @@ export const updateGoal = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     progress: v.optional(v.number()),
-    completed: v.optional(v.boolean()),
+    priority: v.optional(v.number()),
+    completedAt: v.optional(v.string()),
   },
   handler: async (ctx, goal) => {
     const updates = Object.entries(goal)
@@ -51,7 +55,7 @@ export const updateGoal = mutation({
           }
           return acc;
         },
-        {} as Record<string, unknown>,
+        {} as Record<string, unknown>
       );
 
     if (Object.keys(updates).length === 0) {
@@ -61,5 +65,16 @@ export const updateGoal = mutation({
     await ctx.db.patch(goal.goalId, updates);
 
     return ctx.db.get(goal.goalId);
+  },
+});
+
+export const deleteGoal = mutation({
+  args: {
+    goalId: v.id("goals"),
+  },
+  handler: async (ctx, { goalId }) => {
+    await ctx.db.patch(goalId, {
+      deletedAt: new Date().toISOString(),
+    });
   },
 });

@@ -6,6 +6,7 @@ import { useState } from "react";
 import Calendar from "@/components/app/calendar";
 import Sidebar from "@/components/app/sidebar";
 import { Input } from "@/components/ui/input";
+import Interstitial from "@/components/ui/interstitial";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/authClient";
 
@@ -14,7 +15,7 @@ export default function Dashboard() {
 
   const [today, setToday] = useState(new Date());
 
-  if (isPending) return <div>Loading FROM THE TOP...</div>;
+  if (isPending) return <Interstitial message="Loading..." />;
   if (!session) redirect("/auth");
 
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -31,9 +32,12 @@ export default function Dashboard() {
             </h1>
           </div>
         </header>
-        <main className="flex flex-col h-full gap-4 min-h-0 p-4">
+        <main className="flex flex-col h-full gap-4 min-h-0 p-4 items-center">
           <Calendar today={today} setToday={setToday} weekStart={weekStart} />
-          <Input placeholder="Add event" />
+          <Input
+            className="h-36 w-3/4 rounded-4xl"
+            placeholder="Any changes?"
+          />
         </main>
       </div>
     </SidebarProvider>

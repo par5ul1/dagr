@@ -4,7 +4,10 @@ import { v } from "convex/values";
 export default defineSchema({
   userConfig: defineTable({
     userId: v.string(),
-    preferences: v.string(),
+    preferences: v.object({
+      userPersona: v.string(),
+      motivations: v.string(),
+    }),
     dagrCalendarId: v.optional(v.string()),
     calendars: v.object({
       items: v.array(
@@ -17,8 +20,8 @@ export default defineSchema({
             backgroundColor: v.string(),
             foregroundColor: v.string(),
           }),
-          v.record(v.string(), v.any()),
-        ),
+          v.record(v.string(), v.any())
+        )
       ),
     }),
   }).index("by_userId", ["userId"]),
@@ -27,7 +30,8 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     progress: v.float64(),
-    completed: v.boolean(),
+    priority: v.number(),
     completedAt: v.optional(v.string()),
+    deletedAt: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 });

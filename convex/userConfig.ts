@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { action, mutation, query } from "./_generated/server";
-import { authComponent, createAuth, nonNullAssertion } from "./auth";
 import { api } from "./_generated/api";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { authComponent, createAuth, nonNullAssertion } from "./auth";
 import schema from "./schema";
 
 export const GOOGLE_CALENDAR_API_BASE_URL =
@@ -50,12 +50,12 @@ export const createDagrCalendarForUser = action({
           "Content-Type": "application/json",
         },
         cache: "only-if-cached",
-      },
+      }
     );
 
     if (!response.ok) {
       throw new Error(
-        `Google API error: ${response.status} ${response.statusText}`,
+        `Google API error: ${response.status} ${response.statusText}`
       );
     }
 
@@ -100,12 +100,12 @@ export const syncGoogleCalendarWithUserConfig = action({
           "Content-Type": "application/json",
         },
         cache: "only-if-cached",
-      },
+      }
     );
 
     if (!response.ok) {
       throw new Error(
-        `Google API error: ${response.status} ${response.statusText}`,
+        `Google API error: ${response.status} ${response.statusText}`
       );
     }
 
@@ -119,12 +119,14 @@ export const syncGoogleCalendarWithUserConfig = action({
 export const createUserConfig = mutation({
   args: {
     userId: v.string(),
-    preferences: v.string(),
+    preferences: v.optional(
+      schema.tables.userConfig.validator.fields.preferences
+    ),
   },
   async handler(ctx, args) {
     const userConfigDocumentId = await ctx.db.insert("userConfig", {
       userId: args.userId,
-      preferences: args.preferences,
+      preferences: args.preferences ?? { userPersona: "", motivations: "" },
       calendars: { items: [] },
     });
 
@@ -134,7 +136,7 @@ export const createUserConfig = mutation({
       {
         userId: args.userId,
         userConfigId: userConfigDocumentId,
-      },
+      }
     );
 
     return ctx.db.get(userConfigDocumentId);
@@ -144,7 +146,9 @@ export const createUserConfig = mutation({
 export const updateUserConfig = mutation({
   args: {
     id: v.id("userConfig"),
-    preferences: v.optional(v.string()),
+    preferences: v.optional(
+      schema.tables.userConfig.validator.fields.preferences
+    ),
     calendars: v.optional(schema.tables.userConfig.validator.fields.calendars),
     calendarId: v.optional(v.string()),
   },

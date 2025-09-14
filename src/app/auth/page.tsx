@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { api } from "@/../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,12 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useCreateUserConfig, useGetUserConfig } from "@/hooks/useUserConfig";
 import { authClient } from "@/lib/authClient";
+import { convex } from "../providers/ConvexClientProvider";
 
 export default function SignIn() {
   const [otpLoading, setOtpLoading] = useState(false);
 
-  const handleGoogleSignIn = useCallback(async () => {
+  const handleGoogleSignIn = async () => {
     await authClient.signIn.social(
       {
         provider: "google",
@@ -26,22 +29,36 @@ export default function SignIn() {
         },
         onSuccess: () => {
           setOtpLoading(false);
+          (async () => {
+            const user = await authClient.getSession();
+            const userConfig = await convex.query(
+              api.userConfig.getUserConfig,
+              {
+                userId: user.data?.user?.id ?? "",
+              }
+            );
+            if (!userConfig && user.data?.user?.id) {
+              await convex.mutation(api.userConfig.createUserConfig, {
+                userId: user.data.user.id,
+              });
+            }
+          })();
         },
         onError: (ctx) => {
           setOtpLoading(false);
           alert(ctx.error.message);
         },
-      },
+      }
     );
-  }, []);
+  };
 
   return (
-    <div className="h-[100dvh] flex items-center justify-center">
-      <Card className="w-md">
+    <div className="w-screen h-screen flex items-center justify-center">
+      <Card className="max-w-lg w-full">
         <CardHeader>
-          <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Log on to Dagr</CardTitle>
           <CardDescription className="text-xs md:text-sm">
-            Loin/Register with your Google account.
+            If you don&apos;t have an account, we&apos;ll create one for you.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,24 +93,9 @@ export default function SignIn() {
                 d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
               />
             </svg>
-            Sign in with Google
+            Continue with Google
           </Button>
         </CardContent>
-        <CardFooter>
-          <div className="flex justify-center w-full border-t py-4">
-            <p className="text-center text-xs text-neutral-500">
-              Powered by{" "}
-              <a
-                href="https://better-auth.com"
-                className="underline"
-                target="_blank"
-                rel="noopener"
-              >
-                <span className="dark:text-orange-200/90">better-auth.</span>
-              </a>
-            </p>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );

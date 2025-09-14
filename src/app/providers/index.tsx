@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
+import { OnboardingGuard, OnboardingProvider } from "@/guards/onboarding";
 import * as ConvexClientProvider from "./ConvexClientProvider";
 import QueryClientProvider from "./QueryClientProvider";
-import type { ReactNode } from "react";
 import { ThemeProvider } from "./ThemeProvider";
 
 export default function Providers({ children }: { children: ReactNode }) {
@@ -12,7 +13,11 @@ export default function Providers({ children }: { children: ReactNode }) {
       disableTransitionOnChange
     >
       <ConvexClientProvider.ConvexClientProvider>
-        <QueryClientProvider>{children}</QueryClientProvider>
+        <QueryClientProvider>
+          <OnboardingProvider>
+            <OnboardingGuard>{children}</OnboardingGuard>
+          </OnboardingProvider>
+        </QueryClientProvider>
       </ConvexClientProvider.ConvexClientProvider>
     </ThemeProvider>
   );

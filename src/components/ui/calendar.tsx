@@ -1,10 +1,12 @@
 "use client";
 
 import { addDays, format, isSameDay, startOfDay, startOfWeek } from "date-fns";
+import { CircleIcon } from "lucide-react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useInterval } from "usehooks-ts";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "./scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 const HOURS_IN_DAY = Array.from({ length: 24 }, (_, i) => i);
 const HOUR_HEIGHT = 100; /* Height of each hour cell in pixels */
@@ -160,27 +162,40 @@ function CalendarEvent({ event }: { event: CalendarEvent }) {
 
   return (
     <div style={{ ...style }} className="px-1">
-      <button
-        type="button"
-        className={cn(
-          "w-full h-[inherit] px-2 py-1 rounded-md truncate cursor-pointer transition-all duration-200 text-left flex flex-col",
-          "bg-[var(--_color)]/25 hover:bg-[var(--_color)]/20 border border-[var(--_color)] text-[var(--_color)]"
-        )}
-        style={
-          {
-            "--_color": event.color,
-          } as React.CSSProperties
-        }
-        onClick={(e) => {
-          e.stopPropagation();
-          onEventClick?.(event);
-        }}
-      >
-        <p className="font-bold truncate text-xs">{event.title}</p>
-        <p className="text-xs truncate">
-          {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
-        </p>
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            tabIndex={-1}
+            type="button"
+            className={cn(
+              "w-full h-[inherit] px-2 py-1 rounded-md truncate cursor-pointer transition-all duration-200 text-left flex flex-col",
+              "bg-[var(--_color)]/25 hover:bg-[var(--_color)]/20 border border-[var(--_color)] text-[var(--_color)]"
+            )}
+            style={
+              {
+                "--_color": event.color,
+              } as React.CSSProperties
+            }
+            onClick={(e) => {
+              e.stopPropagation();
+              onEventClick?.(event);
+            }}
+          >
+            <p className="font-bold truncate text-xs">{event.title}</p>
+            <p className="text-xs truncate">
+              {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
+            </p>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="text-center">
+            <p className="font-semibold">{event.title}</p>
+            <p className="text-xs opacity-90">
+              {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
+            </p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -249,6 +264,7 @@ function DayColumn({ date }: { date: Date }) {
 
   return (
     <div
+      tabIndex={-1}
       className={cn("flex flex-col flex-grow", isToday && "bg-primary/5")}
       style={{ minWidth: MIN_DAY_WIDTH }}
     >
@@ -264,12 +280,13 @@ function DayColumn({ date }: { date: Date }) {
         {dayEvents.map((event) => (
           <CalendarEvent key={event.id} event={event} />
         ))}
+        {isToday && <CurrentTimeline />}
       </div>
     </div>
   );
 }
 
-function CurrentTimeLine() {
+function CurrentTimeline() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useInterval(() => {
@@ -282,13 +299,14 @@ function CurrentTimeLine() {
 
   return (
     <div
-      className="absolute left-0 right-0 z-30 pointer-events-none transition-[top]"
+      className="absolute left-0 right-0 z-30 pointer-events-none transition-[top] flex items-center -translate-x-1"
       style={{
         top: `${dayProgress * 100}%`,
-        height: "2px",
+        height: "1px",
       }}
     >
-      <div className="h-full w-full border-t-2 border-dashed [dasharray:2px] border-accent-foreground/50" />
+      <CircleIcon className="h-2 w-2 text-primary/70" />
+      <div className="h-full w-full -mr-1 border-t-1 border-primary/70" />
     </div>
   );
 }
@@ -336,7 +354,6 @@ function CalendarBody() {
         {weekDays.map((day) => (
           <DayColumn key={day.toISOString()} date={day} />
         ))}
-        <CurrentTimeLine />
       </div>
       <ScrollBar orientation="horizontal" />
       <ScrollBar orientation="vertical" />

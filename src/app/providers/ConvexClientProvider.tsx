@@ -6,13 +6,13 @@ import type { ReactNode } from "react";
 import { authClient } from "@/lib/authClient";
 import { nonNullAssertion } from "@/utils/nonNullAssertion";
 
-const convex = new ConvexReactClient(
+export const convex = new ConvexReactClient(
   process.env.NEXT_PUBLIC_CONVEX_URL ??
     nonNullAssertion("NEXT_PUBLIC_CONVEX_URL needs to be set"),
   {
     verbose: true,
     expectAuth: true,
-  },
+  }
 );
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
