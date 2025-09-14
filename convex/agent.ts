@@ -168,7 +168,7 @@ function createDateFromStrings(dateStr: string, timeStr: string) {
 function extractTimezoneFromMessage(message: string): string {
   try {
     const calendarEventsMatch = message.match(
-      /User's Calendar Events\s*(\[.*?\])/s
+      /User's Calendar Events\s*(\[[\s\S]*?\])/
     );
     if (!calendarEventsMatch) {
       return "UTC";
