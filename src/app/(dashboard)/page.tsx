@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDate, startOfWeek } from "date-fns";
+import { redirect } from "next/navigation";
 import { useState } from "react";
 import Calendar from "@/components/calendar";
 import Sidebar from "@/components/sidebar";
@@ -9,13 +10,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/authClient";
 
 export default function Dashboard() {
-  const { isPending } = authClient.useSession();
+  const { isPending, data: session } = authClient.useSession();
 
   const [today, setToday] = useState(new Date());
 
-  if (isPending) {
-    return <div>Loading FROM THE TOP...</div>;
-  }
+  if (isPending) return <div>Loading FROM THE TOP...</div>;
+  if (!session) redirect("/auth");
 
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
