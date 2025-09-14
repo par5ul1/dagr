@@ -95,7 +95,6 @@ export const talkWithAgent = action({
       ),
     });
 
-    /* @ts-expect-error - this will be heavy; nothing we can do */
     const result = await structureOutputMakerAgent.generateObject(
       ctx,
       { threadId: thread.threadId },
