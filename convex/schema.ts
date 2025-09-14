@@ -22,8 +22,8 @@ export default defineSchema({
             foregroundColor: v.string(),
             /* enabled: v.boolean(), */ /* TODO: add this back in */
           }),
-          v.record(v.string(), v.any())
-        )
+          v.record(v.string(), v.any()),
+        ),
       ),
     }),
   }).index("by_userId", ["userId"]),

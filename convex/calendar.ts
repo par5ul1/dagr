@@ -15,6 +15,7 @@ export const calendarEventSchema = v.object({
   end: v.object({
     dateTime: v.optional(v.string()),
     date: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
   }),
   etag: v.string(),
   eventType: v.string(),
@@ -31,6 +32,7 @@ export const calendarEventSchema = v.object({
   start: v.object({
     dateTime: v.optional(v.string()),
     date: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
   }),
   status: v.string(),
   summary: v.string(),
@@ -76,21 +78,21 @@ export const getAllEventsForUser = action({
               "Content-Type": "application/json",
             },
             cache: "only-if-cached",
-          }
+          },
         );
         if (!response.ok) {
           throw new Error(
-            `Google API error: ${response.status} ${response.statusText}`
+            `Google API error: ${response.status} ${response.statusText}`,
           );
         }
 
         const data = (await response.json()).items;
         return data as CalendarEvent[];
-      })
+      }),
     );
 
     const rejectedEvents = events.filter(
-      (event) => event.status === "rejected"
+      (event) => event.status === "rejected",
     );
 
     if (rejectedEvents.length > 0) {
@@ -98,37 +100,38 @@ export const getAllEventsForUser = action({
     }
 
     const fulfilledEvents = events.filter(
-      (event) => event.status === "fulfilled"
+      (event) => event.status === "fulfilled",
     );
 
     return fulfilledEvents.flatMap((event) => event.value);
   },
 });
 
-const insertCalendarEventSchema = v.object({
+export const insertCalendarEventSchema = v.object({
   start: v.object({
     // The date, in the format "yyyy-mm-dd", if this is an all-day event.
-    date: v.string(),
+    date: v.optional(v.string()),
     // The time, as a combined date-time value (formatted according to RFC3339). A time zone offset is required unless a time zone is explicitly specified in timeZone.
-    dateTime: v.string(),
+    dateTime: v.optional(v.string()),
     // The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. "Europe/Zurich".) For recurring events this field is required and specifies the time zone in which the recurrence is expanded. For single events this field is optional and indicates a custom time zone for the event start/end.
-    timeZone: v.string(),
+    timeZone: v.optional(v.string()),
   }),
   end: v.object({
-    date: v.string(),
-    dateTime: v.string(),
-    timeZone: v.string(),
+    date: v.optional(v.string()),
+    dateTime: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
   }),
-  originalStartTime: v.object({
-    date: v.string(),
-    dateTime: v.string(),
-    timeZone: v.string(),
-  }),
-  id: v.string(),
-  // Title of the event.
-  summary: v.string(),
-  // Description of the event. Can contain HTML. Optional.
-  description: v.string(),
+  originalStartTime: v.optional(
+    v.object({
+      date: v.optional(v.string()),
+      dateTime: v.optional(v.string()),
+      timeZone: v.optional(v.string()),
+    }),
+  ),
+  id: v.optional(v.string()),
+  title: v.optional(v.string()),
+  summary: v.optional(v.string()),
+  description: v.optional(v.string()),
 });
 
 export const insertCalendarEvent = action({
@@ -137,6 +140,21 @@ export const insertCalendarEvent = action({
     event: insertCalendarEventSchema,
   },
   async handler(ctx, { event, userId }) {
+    let accessToken: string;
+    try {
+      accessToken = (
+        await createAuth(ctx).api.getAccessToken({
+          body: {
+            providerId: "google",
+            userId: userId,
+          },
+          headers: await authComponent.getHeaders(ctx),
+        })
+      ).accessToken;
+    } catch (error) {
+      throw new Error(`Failed to get access token: ${error}`);
+    }
+
     let userConfig = await ctx.runQuery(api.userConfig.getUserConfig, {
       userId,
     });
@@ -152,8 +170,18 @@ export const insertCalendarEvent = action({
     }
 
     const response = await fetch(
-      `${GOOGLE_CALENDAR_API_BASE_URL}/calendars/${encodeURIComponent(userConfig.dagrCalendarId?.trim() ?? nonNullAssertion("DagrCalendarId must exist in the userConfig"))}/events`,
-      {}
+      `${GOOGLE_CALENDAR_API_BASE_URL}/calendars/${encodeURIComponent(userConfig.dagrCalendarId ?? nonNullAssertion("DagrCalendarId must exist in the userConfig"))}/events`,
+      {
+        method: "POST",
+        body: JSON.stringify(event),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
     );
+
+    if (!response.ok)
+      throw new Error(`Google API error: ${JSON.stringify(response)}`);
   },
 });

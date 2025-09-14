@@ -36,28 +36,26 @@ export const createDagrCalendarForUser = action({
       throw new Error(`Failed to get access token: ${error}`);
     }
 
-    const id = `dagr-${args.userId}`;
-
-    const response = await fetch(
-      `${GOOGLE_CALENDAR_API_BASE_URL}/users/me/calendarList`,
+    const newCalendarResponse = await fetch(
+      `${GOOGLE_CALENDAR_API_BASE_URL}/calendars`,
       {
         method: "POST",
         body: JSON.stringify({
-          id,
+          summary: "Dagr Calendar",
         }),
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        cache: "only-if-cached",
-      }
+      },
     );
 
-    if (!response.ok) {
+    if (!newCalendarResponse.ok)
       throw new Error(
-        `Google API error: ${response.status} ${response.statusText}`
+        `Google API error: ${JSON.stringify(newCalendarResponse)}`,
       );
-    }
+
+    const newCalendarId: string = (await newCalendarResponse.json()).id;
 
     const userConfig =
       (await ctx.runQuery(api.userConfig.getUserConfig, {
@@ -66,7 +64,7 @@ export const createDagrCalendarForUser = action({
 
     await ctx.runMutation(api.userConfig.updateUserConfig, {
       id: userConfig._id,
-      calendarId: id,
+      calendarId: newCalendarId,
     });
   },
 });
@@ -101,12 +99,12 @@ export const syncGoogleCalendarWithUserConfig = action({
           "Content-Type": "application/json",
         },
         cache: "only-if-cached",
-      }
+      },
     );
 
     if (!response.ok) {
       throw new Error(
-        `Google API error: ${response.status} ${response.statusText}`
+        `Google API error: ${response.status} ${response.statusText}`,
       );
     }
 
@@ -121,7 +119,7 @@ export const createUserConfig = mutation({
   args: {
     userId: v.string(),
     preferences: v.optional(
-      schema.tables.userConfig.validator.fields.preferences
+      schema.tables.userConfig.validator.fields.preferences,
     ),
   },
   async handler(ctx, args) {
@@ -137,7 +135,7 @@ export const createUserConfig = mutation({
       {
         userId: args.userId,
         userConfigId: userConfigDocumentId,
-      }
+      },
     );
 
     return ctx.db.get(userConfigDocumentId);
@@ -148,7 +146,7 @@ export const updateUserConfig = mutation({
   args: {
     id: v.id("userConfig"),
     preferences: v.optional(
-      schema.tables.userConfig.validator.fields.preferences
+      schema.tables.userConfig.validator.fields.preferences,
     ),
     calendars: v.optional(schema.tables.userConfig.validator.fields.calendars),
     calendarId: v.optional(v.string()),
