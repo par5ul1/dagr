@@ -1,4 +1,4 @@
-import { CheckIcon, PencilIcon, SearchIcon, TrashIcon } from "lucide-react";
+import { CheckIcon, PencilIcon } from "lucide-react";
 import type { Doc } from "@/../convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

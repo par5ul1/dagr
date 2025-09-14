@@ -10,7 +10,7 @@ export const getGoalsByUserId = query({
       .filter(
         (q) =>
           q.eq(q.field("deletedAt"), undefined) ||
-          q.eq(q.field("deletedAt"), null)
+          q.eq(q.field("deletedAt"), null),
       ) /* TODO: Add index */
       .collect();
   },
@@ -55,7 +55,7 @@ export const updateGoal = mutation({
           }
           return acc;
         },
-        {} as Record<string, unknown>
+        {} as Record<string, unknown>,
       );
 
     if (Object.keys(updates).length === 0) {

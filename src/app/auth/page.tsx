@@ -1,17 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useCreateUserConfig, useGetUserConfig } from "@/hooks/useUserConfig";
 import { authClient } from "@/lib/authClient";
 import { convex } from "../providers/ConvexClientProvider";
 
@@ -35,7 +33,7 @@ export default function SignIn() {
               api.userConfig.getUserConfig,
               {
                 userId: user.data?.user?.id ?? "",
-              }
+              },
             );
             if (!userConfig && user.data?.user?.id) {
               await convex.mutation(api.userConfig.createUserConfig, {
@@ -48,7 +46,7 @@ export default function SignIn() {
           setOtpLoading(false);
           alert(ctx.error.message);
         },
-      }
+      },
     );
   };
 

@@ -1,12 +1,9 @@
 "use client";
 
-import { dataTagSymbol } from "@tanstack/react-query";
 import {
   addDays,
-  addWeeks,
   differenceInDays,
   formatDate,
-  isBefore,
   isSameDay,
   startOfWeek,
 } from "date-fns";
@@ -29,7 +26,7 @@ export default function Dashboard() {
   const [today, setToday] = useState(new Date());
 
   const { data: userConfig, isLoading: isUserConfigLoading } = useGetUserConfig(
-    session?.user.id ?? ""
+    session?.user.id ?? "",
   );
   const hasDagrCalendar = userConfig?.dagrCalendarId !== undefined;
 

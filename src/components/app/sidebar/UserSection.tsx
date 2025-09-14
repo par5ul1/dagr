@@ -154,7 +154,7 @@ function PreferencesSection() {
   const user = session?.user ?? nonNullAssertion("User must be defined");
 
   const { data: userConfig, isLoading: isLoadingConfig } = useGetUserConfig(
-    user.id
+    user.id,
   );
   useEffect(() => {
     if (userConfig?.preferences) {
@@ -259,7 +259,7 @@ function IntegrationSection() {
   const user = session?.user ?? nonNullAssertion("User must be defined");
 
   const { data: userConfig, isLoading: isLoadingConfig } = useGetUserConfig(
-    user.id
+    user.id,
   );
 
   const syncGoogleCalendarMutation = useSyncGoogleCalendarWithUserConfig();

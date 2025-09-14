@@ -74,7 +74,7 @@ function ManageGoalsModal({
   setSelectedGoals: (goals: Doc<"goals">[]) => void;
 }) {
   const [view, setView] = useState<ManageGoalsModalView>(
-    ManageGoalsModalView.Manage
+    ManageGoalsModalView.Manage,
   );
   const [goalToEdit, setGoalToEdit] = useState<Doc<"goals"> | null>(null);
 
@@ -144,7 +144,7 @@ function ManageGoalsModalManageView({
   const filteredGoals = goals.filter(
     (goal) =>
       goal.title.toLowerCase().includes(search.toLowerCase()) ||
-      goal.description?.toLowerCase().includes(search.toLowerCase())
+      goal.description?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (

@@ -55,7 +55,7 @@ function useCalendarContext() {
   const context = useContext(CalendarContext);
   if (!context) {
     throw new Error(
-      "useCalendarContext must be used within a CalendarProvider"
+      "useCalendarContext must be used within a CalendarProvider",
     );
   }
   return context;
@@ -64,7 +64,7 @@ function useCalendarContext() {
 function getOverlappingEvents(
   currentEvent: CalendarEvent,
   events: CalendarEvent[],
-  currentDate: Date
+  currentDate: Date,
 ): CalendarEvent[] {
   return events.filter((event) => {
     if (event.id === currentEvent.id) return false;
@@ -90,7 +90,7 @@ function getOverlappingEvents(
 
 function getEventGroups(
   events: CalendarEvent[],
-  currentDate: Date
+  currentDate: Date,
 ): CalendarEvent[][] {
   const groups: CalendarEvent[][] = [];
   const processed = new Set<string>();
@@ -119,7 +119,7 @@ function getEventGroups(
 function calculateEventPosition(
   event: CalendarEvent,
   allEvents: CalendarEvent[],
-  currentDate: Date
+  currentDate: Date,
 ): React.CSSProperties {
   const dayEvents = allEvents.filter((e) => {
     const eventStart = e.start;
@@ -226,7 +226,7 @@ function CalendarEvent({
                   ? "bg-gray-200/20 border border-gray-500 text-gray-200"
                   : "bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500 text-amber-500",
                 isMultiDay && !isEventEnd && "rounded-br-none rounded-bl-none",
-                isContinuation && "rounded-tl-none rounded-tr-none"
+                isContinuation && "rounded-tl-none rounded-tr-none",
               )}
               onClick={handleEventClick}
             >
@@ -303,7 +303,7 @@ function CalendarHeader({ date }: { date: Date }) {
       <span
         className={cn(
           "text-xs font-medium",
-          isToday ? "text-primary font-bold" : "text-muted-foreground"
+          isToday ? "text-primary font-bold" : "text-muted-foreground",
         )}
       >
         {format(date, "EEE")}
@@ -311,7 +311,7 @@ function CalendarHeader({ date }: { date: Date }) {
       <span
         className={cn(
           "text-xs font-medium",
-          isToday ? "text-primary font-bold" : "text-foreground"
+          isToday ? "text-primary font-bold" : "text-foreground",
         )}
       >
         {format(date, "dd")}
@@ -439,7 +439,7 @@ function CalendarBody() {
       const scrollLeft = mondayOffset * MIN_DAY_WIDTH;
 
       const scrollContainer = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
+        "[data-radix-scroll-area-viewport]",
       );
       if (scrollContainer) {
         scrollContainer.scrollTop = Math.max(0, scrollTop);

@@ -1,6 +1,5 @@
 "use client";
 
-import { FileText, Home, MessageSquare, Settings } from "lucide-react";
 import Image from "next/image";
 import logo from "@/app/icon.png";
 import { UserSection } from "@/components/app/sidebar/UserSection";
@@ -8,12 +7,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { Doc } from "../../../../convex/_generated/dataModel";
 import GoalsSection from "./GoalsSection";

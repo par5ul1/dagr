@@ -1,8 +1,6 @@
 "use client";
 
-import { addWeeks, formatDate, startOfWeek, subWeeks } from "date-fns";
-import { useState } from "react";
-import { Calendar, type CalendarEvent } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAllEventsForUser } from "@/hooks/useCalendar";
 import { useGetUserConfig } from "@/hooks/useUserConfig";
@@ -49,7 +47,7 @@ export default function CalendarComponent({
                 !event.start.date &&
                 !event.end.date &&
                 event.start.dateTime &&
-                event.end.dateTime
+                event.end.dateTime,
             )
             .map((event) => ({
               start: new Date(event.start.dateTime ?? ""),

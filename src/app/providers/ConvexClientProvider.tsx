@@ -12,7 +12,7 @@ export const convex = new ConvexReactClient(
   {
     verbose: true,
     expectAuth: true,
-  }
+  },
 );
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {

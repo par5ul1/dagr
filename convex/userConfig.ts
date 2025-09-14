@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { api } from "./_generated/api";
-import { action, internalMutation, mutation, query } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
 import { authComponent, createAuth, nonNullAssertion } from "./auth";
 import schema from "./schema";
 

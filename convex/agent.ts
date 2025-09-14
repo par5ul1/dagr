@@ -128,7 +128,7 @@ export const talkWithAgent = action({
       userId: args.userId,
       event: {
         ...events[0]!,
-        title: events[0]!.title,
+        title: events[0]?.title,
       },
     });
 

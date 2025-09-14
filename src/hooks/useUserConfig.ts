@@ -31,7 +31,7 @@ export function useUpdateUserConfig() {
 export function useSyncGoogleCalendarWithUserConfig() {
   return useMutation({
     mutationFn: useConvexAction(
-      api.userConfig.syncGoogleCalendarWithUserConfig
+      api.userConfig.syncGoogleCalendarWithUserConfig,
     ),
   });
 }

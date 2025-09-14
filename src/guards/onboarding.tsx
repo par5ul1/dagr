@@ -51,7 +51,7 @@ interface OnboardingContextType {
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function useOnboarding() {
@@ -81,7 +81,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const userId = session?.user?.id;
 
   const { data: userConfig, isLoading: isUserConfigLoading } = useGetUserConfig(
-    userId || ""
+    userId || "",
   );
   const { data: goals = [] } = useGetGoalsByUserId(userId || "");
 
@@ -148,7 +148,7 @@ export function OnboardingGuard({ children }: OnboardingGuardProps) {
 
 function OnboardingFlow() {
   const [currentPage, setCurrentPage] = useState<OnboardingPage>(
-    OnboardingPage.Welcome
+    OnboardingPage.Welcome,
   );
   const [preferences, setPreferences] = useState({
     userPersona: "",
