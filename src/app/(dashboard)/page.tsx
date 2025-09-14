@@ -3,8 +3,8 @@
 import { formatDate, startOfWeek } from "date-fns";
 import { redirect } from "next/navigation";
 import { useState } from "react";
-import Calendar from "@/components/calendar";
-import Sidebar from "@/components/sidebar";
+import Calendar from "@/components/app/calendar";
+import Sidebar from "@/components/app/sidebar";
 import { Input } from "@/components/ui/input";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/authClient";
