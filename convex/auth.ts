@@ -30,6 +30,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     },
     socialProviders: {
       google: {
+        scope: ["https://www.googleapis.com/auth/calendar"],
         enabled: true,
         clientId:
           process.env.GOOGLE_CLIENT_ID ??
